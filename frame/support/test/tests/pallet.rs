@@ -36,6 +36,23 @@ mod pallet {
 		}
 	}
 
+	pallet::storage!(
+		pub TotalIssuance get(fn total_issuance) build(|config: &GenesisConfig<T, I>| {
+			config.balances.iter().fold(Zero::zero(), |acc: T::Balance, &(_, n)| acc + n)
+		}): T::Balance;
+	);
+
+	pallet::storage!(
+		pub TotalIssuance get(fn total_issuance) build(|config: &GenesisConfig<T, I>| {
+			config.balances.iter().fold(Zero::zero(), |acc: T::Balance, &(_, n)| acc + n)
+		}): T::Balance;
+	);
+
+	pallet::extra_genesis!(
+		fn build(|config| {
+		})
+	);
+
 	#[pallet::error]
 	pub enum Error<T, I = DefaultInstance> {
 		/// E
