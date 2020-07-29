@@ -37,13 +37,7 @@ mod pallet {
 	}
 
 	pallet::storage!(
-		pub TotalIssuance get(fn total_issuance) build(|config: &GenesisConfig<T, I>| {
-			config.balances.iter().fold(Zero::zero(), |acc: T::Balance, &(_, n)| acc + n)
-		}): T::Balance;
-	);
-
-	pallet::storage!(
-		pub TotalIssuance get(fn total_issuance) build(|config: &GenesisConfig<T, I>| {
+		pub MyStorage get(fn my_storage) build(|config: &GenesisConfig<T, I>| {
 			config.balances.iter().fold(Zero::zero(), |acc: T::Balance, &(_, n)| acc + n)
 		}): T::Balance;
 	);
@@ -52,6 +46,77 @@ mod pallet {
 		fn build(|config| {
 		})
 	);
+
+	trait StorageMap {
+		/// Key type to insert
+		type Key: Codec;
+
+		/// Hasher to use
+		type Hasher: StoragHasher;
+
+		/// Query type to store
+		type Query: Codec;
+
+		/// If not provided, macro will expand to Query::default().
+		///
+		/// Default value if trie doesn't contains any value.
+		fn default() -> Self::Query;
+		// NOTE: this was before the syntax `= ..` before
+
+		/// Automatically filled by macro: if Query is option then value is only inner type,
+		/// otherwise Query == Value
+		///
+		/// Value stored on chain.
+		type Value: Codec;
+
+		/// Automatically filled by macro (using function default above)
+		fn from_optional_value_to_query(v: Option<Self::Value>) -> Self::Query;
+		/// Automatically filled by macro.
+		fn from_query_to_optional_value(v: Self::Query) -> Option<Self::Value>;
+
+		/// Automatically filled by macro (using the name of the pallet)
+		fn module_prefix() -> &'static [u8];
+
+		/// Automatically filled by macro (using the name of the storage)
+		fn storage_prefix() -> &'static [u8];
+
+		// All operation on storage are automatically implemented
+		// (it is already the case in substrate)
+
+		fn get(..) -> .. { ..}
+		fn remove(..) -> .. { ..}
+		fn mutate(..) -> .. { ..}
+		...
+	}
+
+
+	#[pallet::storage(get(fn my_storage))]
+	impl<T: Trait<I>, I: Instance> StorageValue for MyStorage<T, I> {
+		type Query = T::Balance;
+	}
+
+	#[pallet::storage(get(fn my_storage_2))]
+	impl StorageMap for MyStorage2 {
+		type Key = T::AccountId; type Hasher = Blake2_256; type Query = Option<T::Balance>;
+	}
+
+	#[pallet::storage(get(fn my_storage_3))]
+	impl StorageDoubleMap for MyStorage3 {
+		type Key1 = T::AccountId; type Hasher1 = Blake2_256;
+		type Key2 = T::AccountId; type Hasher2 = Blake2_256;
+		type Query = Option<T::Balance>;
+	}
+
+	#[pallet::genesis_config_def]
+	pub struct GenesisConfig {
+		// fields
+	}
+
+	#[pallet::genesis_config_build]
+	impl GenesisConfig {
+		fn build(&self) -> {
+		}
+	}
 
 	#[pallet::error]
 	pub enum Error<T, I = DefaultInstance> {
