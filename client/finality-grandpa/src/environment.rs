@@ -515,12 +515,14 @@ where
 			equivocation,
 		);
 
-		self.client.runtime_api()
-			.submit_report_equivocation_extrinsic(
+		self.client
+			.runtime_api()
+			.submit_report_equivocation_unsigned_extrinsic(
 				&BlockId::Hash(best_header.hash()),
 				equivocation_proof,
 				key_owner_proof,
-			).map_err(Error::Client)?;
+			)
+			.map_err(Error::Client)?;
 
 		Ok(())
 	}
@@ -928,7 +930,12 @@ where
 			// remove the round from live rounds and start tracking the next round
 			let mut current_rounds = current_rounds.clone();
 			current_rounds.remove(&round);
-			current_rounds.insert(round + 1, HasVoted::No);
+
+			// NOTE: this condition should always hold as GRANDPA rounds are always
+			// started in increasing order, still it's better to play it safe.
+			if !current_rounds.contains_key(&(round + 1)) {
+				current_rounds.insert(round + 1, HasVoted::No);
+			}
 
 			let set_state = VoterSetState::<Block>::Live {
 				completed_rounds,
