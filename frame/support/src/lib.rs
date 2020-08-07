@@ -825,3 +825,21 @@ mod tests {
 		})
 	}
 }
+
+/// prelude to be used alongside pallet macro, for ease of use.
+pub mod pallet_prelude {
+	pub trait ModuleInterface {} // TODO TODO: move
+	pub use frame_support::traits::{Get, Instance};
+	pub use frame_support::dispatch::DispatchResultWithPostInfo;
+	pub use sp_inherents::ProvideInherent;
+	pub use sp_inherents::InherentData;
+	pub use sp_inherents::InherentIdentifier;
+	pub use crate::{
+		Twox256, Twox128, Blake2_256, Blake2_128, Identity, Twox64Concat, Blake2_128Concat,
+	};
+	pub use frame_support::storage::types::*;
+	pub use crate::{
+		StorageValue, StorageMap, StorageDoubleMap, StoragePrefixedMap, IterableStorageMap,
+		IterableStorageDoubleMap,
+	};
+}

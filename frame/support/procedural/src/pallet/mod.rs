@@ -40,3 +40,6 @@ pub fn pallet(
 		Err(e) => e.to_compile_error().into(),
 	}
 }
+
+// TODO TODO: genesisConfig: and proof of concept is done!!!
+// TODO TODO: (and maybe CallDef just for ppl)

@@ -413,3 +413,109 @@ pub fn check_impl_generics(
 	Ok(i)
 }
 
+/// Check the syntax:
+/// * either `` (no generics
+/// * or `T`
+/// * or `T: Trait`
+/// * or `T, I = DefaultInstance`
+/// * or `T: Trait<I>, I: Instance = DefaultInstance`
+/// * or `I`
+/// * or `I: DefaultInstance`
+/// * or `I: Instance = DefaultInstance`
+///
+/// `span` is used in case generics is empty (empty generics has span == call_site).
+///
+/// return the instance if found.
+pub fn check_storage_optional_gen(
+	gen: &syn::Generics,
+	span: proc_macro2::Span,
+) -> syn::Result<InstanceUsage> {
+	let expected = "expect `` or `T` or `T: Trait` or `T, I = DefaultInstance` or \
+		`T: Trait<I>, I: Instance = DefaultInstance` or `I` or `I = DefaultInstance` or `I: Instance = DefaultInstance`";
+	pub struct Checker(InstanceUsage);
+	impl syn::parse::Parse for Checker {
+		fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+			let mut instance_usage = InstanceUsage {
+				span: input.span(),
+				has_instance: false,
+			};
+
+			if input.is_empty() {
+				return Ok(Self(instance_usage))
+			}
+
+			let lookahead = input.lookahead1();
+			if lookahead.peek(keyword::I) {
+				instance_usage.has_instance = true;
+
+				input.parse::<keyword::I>()?;
+
+				if input.is_empty() {
+					return Ok(Self(instance_usage))
+				}
+
+				if input.peek(syn::Token![:]) {
+					input.parse::<syn::Token![:]>()?;
+					input.parse::<keyword::Instance>()?;
+				}
+				if input.peek(syn::Token![=]) {
+					input.parse::<syn::Token![=]>()?;
+					input.parse::<keyword::DefaultInstance>()?;
+				}
+
+				Ok(Self(instance_usage))
+			} else if lookahead.peek(keyword::T) {
+				input.parse::<keyword::T>()?;
+
+				if input.is_empty() {
+					return Ok(Self(instance_usage))
+				}
+
+				let lookahead = input.lookahead1();
+				if lookahead.peek(syn::Token![,]) {
+					instance_usage.has_instance = true;
+					input.parse::<syn::Token![,]>()?;
+					input.parse::<keyword::I>()?;
+					input.parse::<syn::Token![=]>()?;
+					input.parse::<keyword::DefaultInstance>()?;
+
+					Ok(Self(instance_usage))
+				} else if lookahead.peek(syn::Token![:]) {
+					input.parse::<syn::Token![:]>()?;
+					input.parse::<keyword::Trait>()?;
+
+					if input.is_empty() {
+						return Ok(Self(instance_usage))
+					}
+
+					instance_usage.has_instance = true;
+					input.parse::<syn::Token![<]>()?;
+					input.parse::<keyword::I>()?;
+					input.parse::<syn::Token![>]>()?;
+					input.parse::<syn::Token![,]>()?;
+					input.parse::<keyword::I>()?;
+					input.parse::<syn::Token![:]>()?;
+					input.parse::<keyword::Instance>()?;
+					input.parse::<syn::Token![=]>()?;
+					input.parse::<keyword::DefaultInstance>()?;
+
+					Ok(Self(instance_usage))
+				} else {
+					Err(lookahead.error())
+				}
+			} else {
+				Err(lookahead.error())
+			}
+		}
+	}
+
+	let i = syn::parse2::<Checker>(gen.params.to_token_stream())
+		.map_err(|e| {
+			let msg = format!("Invalid type def generics: {}", expected);
+			let mut err = syn::Error::new(span, msg);
+			err.combine(e);
+			err
+		})?.0;
+
+	Ok(i)
+}

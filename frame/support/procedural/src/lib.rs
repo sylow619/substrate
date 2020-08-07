@@ -25,6 +25,7 @@ mod storage;
 mod construct_runtime;
 mod pallet;
 
+pub(crate) use storage::INHERENT_INSTANCE_NAME;
 use proc_macro::TokenStream;
 
 /// Declares strongly-typed wrappers around codec-compatible types in storage.

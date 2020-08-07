@@ -20,6 +20,7 @@ mod module;
 mod call;
 mod error;
 mod event;
+mod storage;
 
 use crate::pallet::Def;
 use quote::ToTokens;
@@ -35,6 +36,7 @@ pub fn expand(mut def: Def) -> proc_macro2::TokenStream {
 	let call = call::expand_call(&mut def);
 	let error = error::expand_error(&mut def);
 	let event = event::expand_event(&mut def);
+	let storages = storage::expand_storages(&mut def);
 
 	let scrate_decl = generate_hidden_includes(&def.hidden_crate_name(), "frame-support");
 
@@ -46,6 +48,7 @@ pub fn expand(mut def: Def) -> proc_macro2::TokenStream {
 		#call
 		#error
 		#event
+		#storages
 	);
 
 	def.item.content.as_mut().expect("This is checked by parsing").1

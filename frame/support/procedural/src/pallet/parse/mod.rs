@@ -26,6 +26,7 @@ mod call;
 mod error;
 mod origin;
 mod inherent;
+mod storage;
 mod event;
 pub mod helper;
 
@@ -41,7 +42,7 @@ pub struct Def {
 	pub module: module::ModuleDef,
 	pub module_interface: module_interface::ModuleInterfaceDef,
 	pub call: call::CallDef,
-	// storage: StorageDef,
+	pub storages: Vec<storage::StorageDef>,
 	pub error: Option<error::ErrorDef>,
 	pub event: Option<event::EventDef>,
 	pub origin: Option<origin::OriginDef>,
@@ -65,6 +66,7 @@ impl Def {
 		let mut event = None;
 		let mut origin = None;
 		let mut inherent = None;
+		let mut storages = vec![];
 
 		for (index, item) in items.iter_mut().enumerate() {
 			let pallet_attr: Option<PalletAttr> = helper::take_first_item_attr(item)?;
@@ -85,6 +87,8 @@ impl Def {
 					origin = Some(origin::OriginDef::try_from(index, item)?),
 				Some(PalletAttr::Inherent) =>
 					inherent = Some(inherent::InherentDef::try_from(index, item)?),
+				Some(PalletAttr::Storage) =>
+					storages.push(storage::StorageDef::try_from(index, item)?),
 				None => (),
 			}
 		}
@@ -101,6 +105,7 @@ impl Def {
 			event,
 			origin,
 			inherent,
+			storages,
 		};
 
 		def.check_instance_usage()?;
@@ -115,6 +120,7 @@ impl Def {
 		instances.extend_from_slice(&self.call.instances[..]);
 		instances.extend_from_slice(&self.module.instances[..]);
 		instances.extend_from_slice(&self.module_interface.instances[..]);
+		instances.extend(&mut self.storages.iter().flat_map(|s| s.instances.clone()));
 		if let Some(event) = &self.event {
 			instances.extend_from_slice(&event.instances[..]);
 		}
@@ -213,6 +219,7 @@ mod keyword {
 	syn::custom_keyword!(module_interface);
 	syn::custom_keyword!(inherent);
 	syn::custom_keyword!(error);
+	syn::custom_keyword!(storage);
 }
 
 /// Parse attributes for item in pallet module
@@ -226,6 +233,7 @@ pub enum PalletAttr {
 	Event,
 	Origin,
 	Inherent,
+	Storage,
 }
 
 impl syn::parse::Parse for PalletAttr {
@@ -261,6 +269,9 @@ impl syn::parse::Parse for PalletAttr {
 		} else if lookahead.peek(keyword::inherent) {
 			content.parse::<keyword::inherent>()?;
 			Ok(PalletAttr::Inherent)
+		} else if lookahead.peek(keyword::storage) {
+			content.parse::<keyword::storage>()?;
+			Ok(PalletAttr::Storage)
 		} else {
 			Err(lookahead.error())
 		}

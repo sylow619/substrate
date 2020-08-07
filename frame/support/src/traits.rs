@@ -1664,6 +1664,20 @@ pub trait Instance: 'static {
     const PREFIX: &'static str ;
 }
 
+/// TODO TODO: doc
+pub trait StorageInstance {
+	type I: Instance;
+	const STORAGE_PREFIX: &'static str;
+}
+
+/// Implement Get for any type and return Default.
+pub struct GetDefault;
+impl<T: Default> crate::traits::Get<T> for GetDefault {
+	fn get() -> T {
+		T::default()
+	}
+}
+
 #[cfg(test)]
 mod tests {
 	use super::*;
