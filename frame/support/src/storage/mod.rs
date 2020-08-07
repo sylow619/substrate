@@ -29,6 +29,57 @@ pub mod child;
 pub mod generator;
 pub mod migration;
 
+pub mod ToAdd {
+	pub trait StorageInstance: crate::traits::Instance {
+		const STORAGE_PREFIX: &'static u8;
+	}
+
+	pub struct GetDefault;
+	impl<T: Default> crate::traits::Get<T> for GetDefault<T> {
+		fn get() -> T {
+			T::default()
+		}
+	}
+
+	pub struct StorageMap<Prefix, Hasher, Key, Value, Query=Option<Value>, OnEmpty=GetDefault>(core::marker::PhantomData<(Prefix, StorageHasher, Key, Value, Query, OnEmpty)>);
+
+	impl<Prefix, StorageHasher, Key, Value, OnEmpty> super::generator::StorageMap<Key, Value> for
+		StorageMap<Prefix, Storagehasher, Key, Value, Value, OnEmpty>
+	where
+		Prefix: StorageInstance,
+		Hasher: frame_support::traits::StorageHasher,
+		Key: FullEncode,
+		Value: FullEncode,
+		OnEmpty: crate::traits::Get<Value>
+	{
+		type Query = Value;
+		type Hasher = Hasher;
+		fn module_prefix() -> &'static [u8] {
+			<Prefix as crate::traits::Instance>::PREFIX
+		}
+		fn storage_prefix() -> &'static [u8] {
+			Prefix::STORAGE_PREFIX
+		}
+		fn from_optional_value_to_query(v: Option<Value>) -> Self::Query {
+			v.unwrap_or_else(OnEmpty::get)
+		}
+		fn from_query_to_optional_value(v: Self::Query) -> Option<Value> {
+			Some(v)
+		}
+	}
+
+	// impl<Prefix, Hasher, Key, Value, OnEmpty> super::generator::StorageMap<Key, Value> for
+	// 	StorageMap<Prefix, Storagehasher, Key, Value, Option<Value>, OnEmpty>
+	// where
+	// 	Prefix: StorageInstance,
+	// 	Hasher: frame_support::traits::StorageHasher,
+	// 	Key: FullEncode,
+	// 	Value: FullEncode,
+	// 	OnEmpty: crate::traits::Get<Value>
+	// {
+	// }
+}
+
 /// Describes whether a storage transaction should be committed or rolled back.
 pub enum TransactionOutcome<T> {
 	/// Transaction should be committed.
