@@ -26,6 +26,9 @@ use crate::pallet::Def;
 use quote::ToTokens;
 use frame_support_procedural_tools::{generate_hidden_includes};
 
+// TODO TODO: generate Store trait
+// TODO TODO: generate instances
+
 /// Expand definition, in particular:
 /// * add some bounds and variants to type defined,
 /// * create some new types,
