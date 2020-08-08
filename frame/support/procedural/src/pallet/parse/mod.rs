@@ -19,15 +19,15 @@
 //!
 //! Parse the module into `Def` struct through `Def::try_from` function.
 
-mod trait_;
-mod module;
-mod module_interface;
-mod call;
-mod error;
-mod origin;
-mod inherent;
-mod storage;
-mod event;
+pub mod trait_;
+pub mod module;
+pub mod module_interface;
+pub mod call;
+pub mod error;
+pub mod origin;
+pub mod inherent;
+pub mod storage;
+pub mod event;
 pub mod helper;
 
 use syn::spanned::Spanned;

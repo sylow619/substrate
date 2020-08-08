@@ -13,7 +13,7 @@ mod pallet {
 	pub trait Trait<I: Instance = DefaultInstance>: frame_system::Trait {
 		#[pallet::const_]
 		type Too: Get<u32>;
-		type Balance: frame_support::dispatch::Parameter;
+		type Balance: frame_support::dispatch::Parameter + Default;
 	}
 
 	#[pallet::module]
@@ -33,6 +33,16 @@ mod pallet {
 			Ok(().into())
 		}
 	}
+
+	// impl <T: Trait<I>, I: Instance> Module<T, I> {
+	// 	#[doc(hidden)]
+	// 	pub fn module_() {
+	// 		MyStorageValue::<T, I>::storage_entry_metadata_builder("a", "b", &[]);
+	// 	}
+	// }
+
+	#[pallet::storage]
+	type MyStorageValue<T: Trait<I>, I: Instance=DefaultInstance> = StorageValueType<MyStorageP<I>, T::Balance, T::Balance>;
 
 	#[pallet::storage]
 	type MyStorage<I> = StorageMapType<MyStorageP<I>, Blake2_128Concat, u32, u32>;

@@ -416,6 +416,8 @@ pub fn check_impl_generics(
 /// Check the syntax:
 /// * either `` (no generics
 /// * or `T`
+/// * TODO: or `T, I`
+/// * TODO: or `T: Trait<I>, I`
 /// * or `T: Trait`
 /// * or `T, I = DefaultInstance`
 /// * or `T: Trait<I>, I: Instance = DefaultInstance`
