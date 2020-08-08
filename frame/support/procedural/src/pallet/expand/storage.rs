@@ -17,10 +17,12 @@
 
 use crate::pallet::Def;
 use proc_macro2::Span;
+use crate::pallet::parse::storage::Metadata;
+use frame_support_procedural_tools::clean_type_string;
 
 /// * generate StoragePrefix structs (e.g. for a storage `MyStorage` a struct with the name
 ///   `MyStorageP` is generated and implements StorageInstance trait.
-/// * TODO TODO: generate metadatas
+/// * generate metadatas
 /// * TODO TODO: maybe assert that storages are correclty written, i.e. they implement their respective
 /// trait correctly
 pub fn expand_storages(def: &mut Def) -> proc_macro2::TokenStream {
@@ -53,20 +55,10 @@ pub fn expand_storages(def: &mut Def) -> proc_macro2::TokenStream {
 		(Default::default(), Default::default())
 	};
 
-	// TODO TODO: everywhere check debug print to format and whitespace stuff for metadata
 	let entries = def.storages.iter()
 		.map(|storage| {
 			let docs = &storage.docs;
-			use crate::pallet::parse::storage::Metadata;
-			let args = match &storage.metadata {
-				Metadata::Value { value } => quote::quote!(stringify!(#value), &[ #( #docs, )* ]), // TODO TODO strinify remove whitespace ?
-				Metadata::Map { key, value } => quote::quote!(
-					stringify!(#key), stringify!(#value), &[ #( #docs, )* ]
-				),
-				Metadata::DoubleMap { key1, key2, value } => quote::quote!(
-					stringify!(#key1), stringify!(#key2), stringify!(#value), &[ #( #docs, )* ]
-				),
-			};
+
 			let ident = &storage.ident;
 			let instance_gen = if storage.has_instance  {
 				Some(quote::quote!(I))
@@ -79,8 +71,52 @@ pub fn expand_storages(def: &mut Def) -> proc_macro2::TokenStream {
 				None
 			};
 
+			let full_ident = quote::quote!(#ident<#trait_gen #instance_gen>);
+			let ty = match &storage.metadata {
+				Metadata::Value { value } => {
+					let value = clean_type_string(&quote::quote!(#value).to_string());
+					quote::quote!(
+						#scrate::metadata::StorageEntryType::Plain(
+							#scrate::metadata::DecodeDifferent::Encode(#value)
+						)
+					)
+				},
+				Metadata::Map { key, value } => {
+					let value = clean_type_string(&quote::quote!(#value).to_string());
+					let key = clean_type_string(&quote::quote!(#key).to_string());
+					quote::quote!(
+						#scrate::metadata::StorageEntryType::Map {
+							hasher: <#full_ident>::HASHER,
+							key: #scrate::metadata::DecodeDifferent::Encode(#key),
+							value: #scrate::metadata::DecodeDifferent::Encode(#value),
+							unused: false,
+						}
+					)
+				},
+				Metadata::DoubleMap { key1, key2, value } => {
+					let value = clean_type_string(&quote::quote!(#value).to_string());
+					let key1 = clean_type_string(&quote::quote!(#key1).to_string());
+					let key2 = clean_type_string(&quote::quote!(#key2).to_string());
+					quote::quote!(
+						#scrate::metadata::StorageEntryType::DoubleMap {
+							hasher: <#full_ident>::HASHER1,
+							key2_hasher: <#full_ident>::HASHER2,
+							key1: #scrate::metadata::DecodeDifferent::Encode(#key1),
+							key2: #scrate::metadata::DecodeDifferent::Encode(#key2),
+							value: #scrate::metadata::DecodeDifferent::Encode(#value),
+						}
+					)
+				}
+			};
+
 			quote::quote!(
-				<#ident<#trait_gen #instance_gen>>::storage_entry_metadata_builder(#args)
+				#scrate::metadata::StorageEntryMetadata {
+					name: #scrate::metadata::DecodeDifferent::Encode(<#full_ident>::NAME),
+					modifier: <#full_ident as #scrate::storage::types::StorageMetadataMofidierGetter>::MODIFIER,
+					ty: #ty,
+					default: #scrate::metadata::DecodeDifferent::Encode(<#full_ident>::DEFAULT),
+					documentation: #scrate::metadata::DecodeDifferent::Encode(&[ #( #docs, )* ]),
+				}
 			)
 		});
 

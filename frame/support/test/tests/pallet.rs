@@ -27,22 +27,15 @@ mod pallet {
 	impl<T: Trait<I>, I: Instance> Call for Module<T, I> {
 		#[pallet::weight = 0]
 		fn toto(origin: OriginFor<T>, #[pallet::compact] toto: u32) -> DispatchResultWithPostInfo {
-			<MyStorage<I>>::insert(3u32, 3u32);
+			// <MyStorage<I>>::insert(3u32, 3u32);
 			let _ = origin;
 			let _ = toto;
 			Ok(().into())
 		}
 	}
 
-	// impl <T: Trait<I>, I: Instance> Module<T, I> {
-	// 	#[doc(hidden)]
-	// 	pub fn module_() {
-	// 		MyStorageValue::<T, I>::storage_entry_metadata_builder("a", "b", &[]);
-	// 	}
-	// }
-
 	#[pallet::storage]
-	type MyStorageValue<T: Trait<I>, I: Instance=DefaultInstance> = StorageValueType<MyStorageP<I>, T::Balance, T::Balance>;
+	type MyStorageValue<T: Trait<I>, I: Instance=DefaultInstance> = StorageValueType<MyStorageValueP<I>, T::Balance, T::Balance>;
 
 	#[pallet::storage]
 	type MyStorage<I> = StorageMapType<MyStorageP<I>, Blake2_128Concat, u32, u32>;

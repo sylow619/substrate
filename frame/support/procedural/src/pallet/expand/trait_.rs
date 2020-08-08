@@ -16,6 +16,7 @@
 // limitations under the License.
 
 use crate::pallet::Def;
+use frame_support_procedural_tools::clean_type_string;
 
 /// * Impl fn module_constant_metadata for module.
 pub fn expand_trait_(def: &mut Def) -> proc_macro2::TokenStream {
@@ -29,7 +30,7 @@ pub fn expand_trait_(def: &mut Def) -> proc_macro2::TokenStream {
 	let consts = def.trait_.consts_metadata.iter()
 		.map(|const_| {
 			let type_ = &const_.type_;
-			let type_str = format!("{:?}", type_);
+			let type_str = clean_type_string(&quote::quote!(#type_).to_string());
 			let ident = &const_.ident;
 			let ident_str = format!("{}", ident);
 			let doc = const_.doc.clone().into_iter();
@@ -58,8 +59,8 @@ pub fn expand_trait_(def: &mut Def) -> proc_macro2::TokenStream {
 				unsafe impl<#type_impl_gen> Sync for #default_byte_getter<#type_use_gen> {}
 
 				#scrate::dispatch::ModuleConstantMetadata {
-					name: #scrate::dispatch::DecodeDifferent::Encode(#type_str),
-					ty: #scrate::dispatch::DecodeDifferent::Encode(#ident_str),
+					name: #scrate::dispatch::DecodeDifferent::Encode(#ident_str),
+					ty: #scrate::dispatch::DecodeDifferent::Encode(#type_str),
 					value: #scrate::dispatch::DecodeDifferent::Encode(
 						#scrate::dispatch::DefaultByteGetter(
 							&#default_byte_getter::<#type_use_gen>(

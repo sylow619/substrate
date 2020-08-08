@@ -301,7 +301,7 @@ where
 		DefaultByteGetter(&OnEmptyGetter::<Value, OnEmpty>(core::marker::PhantomData));
 }
 
-trait StorageMetadataMofidierGetter {
+pub trait StorageMetadataMofidierGetter {
 	const MODIFIER: StorageEntryModifier;
 }
 

@@ -28,6 +28,8 @@ use frame_support_procedural_tools::{generate_hidden_includes};
 
 // TODO TODO: generate Store trait
 // TODO TODO: generate instances
+// TODO TODO: GenesisConfig
+// TODO TODO: double check metadata
 
 /// Expand definition, in particular:
 /// * add some bounds and variants to type defined,
