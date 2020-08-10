@@ -112,7 +112,7 @@ pub fn expand_storages(def: &mut Def) -> proc_macro2::TokenStream {
 			quote::quote!(
 				#scrate::metadata::StorageEntryMetadata {
 					name: #scrate::metadata::DecodeDifferent::Encode(<#full_ident>::NAME),
-					modifier: <#full_ident as #scrate::storage::types::StorageMetadataMofidierGetter>::MODIFIER,
+					modifier: <#full_ident>::MODIFIER,
 					ty: #ty,
 					default: #scrate::metadata::DecodeDifferent::Encode(<#full_ident>::DEFAULT),
 					documentation: #scrate::metadata::DecodeDifferent::Encode(&[ #( #docs, )* ]),

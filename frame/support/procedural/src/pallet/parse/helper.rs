@@ -416,13 +416,11 @@ pub fn check_impl_generics(
 /// Check the syntax:
 /// * either `` (no generics
 /// * or `T`
-/// * TODO: or `T, I`
-/// * TODO: or `T: Trait<I>, I`
 /// * or `T: Trait`
 /// * or `T, I = DefaultInstance`
+/// * or `T: Trait<I>, I = DefaultInstance`
 /// * or `T: Trait<I>, I: Instance = DefaultInstance`
-/// * or `I`
-/// * or `I: DefaultInstance`
+/// * or `I = DefaultInstance`
 /// * or `I: Instance = DefaultInstance`
 ///
 /// `span` is used in case generics is empty (empty generics has span == call_site).
@@ -433,7 +431,8 @@ pub fn check_storage_optional_gen(
 	span: proc_macro2::Span,
 ) -> syn::Result<InstanceUsage> {
 	let expected = "expect `` or `T` or `T: Trait` or `T, I = DefaultInstance` or \
-		`T: Trait<I>, I: Instance = DefaultInstance` or `I` or `I = DefaultInstance` or `I: Instance = DefaultInstance`";
+		`T: Trait<I>, I = DefaultInstance` or `T: Trait<I>, I: Instance = DefaultInstance` or \
+		`I = DefaultInstance` or `I: Instance = DefaultInstance`";
 	pub struct Checker(InstanceUsage);
 	impl syn::parse::Parse for Checker {
 		fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
@@ -452,18 +451,13 @@ pub fn check_storage_optional_gen(
 
 				input.parse::<keyword::I>()?;
 
-				if input.is_empty() {
-					return Ok(Self(instance_usage))
-				}
-
 				if input.peek(syn::Token![:]) {
 					input.parse::<syn::Token![:]>()?;
 					input.parse::<keyword::Instance>()?;
 				}
-				if input.peek(syn::Token![=]) {
-					input.parse::<syn::Token![=]>()?;
-					input.parse::<keyword::DefaultInstance>()?;
-				}
+
+				input.parse::<syn::Token![=]>()?;
+				input.parse::<keyword::DefaultInstance>()?;
 
 				Ok(Self(instance_usage))
 			} else if lookahead.peek(keyword::T) {
@@ -496,8 +490,13 @@ pub fn check_storage_optional_gen(
 					input.parse::<syn::Token![>]>()?;
 					input.parse::<syn::Token![,]>()?;
 					input.parse::<keyword::I>()?;
-					input.parse::<syn::Token![:]>()?;
-					input.parse::<keyword::Instance>()?;
+
+
+					if input.peek(syn::Token![:]) {
+						input.parse::<syn::Token![:]>()?;
+						input.parse::<keyword::Instance>()?;
+					}
+
 					input.parse::<syn::Token![=]>()?;
 					input.parse::<keyword::DefaultInstance>()?;
 
